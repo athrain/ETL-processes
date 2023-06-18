@@ -24,7 +24,7 @@ duplicate_values = pd.read_excel(r'C:\path\Case_Sensitive_Duplicates.xlsx')  ###
 raw_data = pd.read_excel(r"C:\path\file_name.xlsx")
 print (f'Connections to PostgreSQL Table was established')
 
-###creates a table in PostgreSQL database
+###loads a table from PostgreSQL DB )table that already exists)
 metadata = sql.MetaData()
 
 table_name = "candidate_progress"
