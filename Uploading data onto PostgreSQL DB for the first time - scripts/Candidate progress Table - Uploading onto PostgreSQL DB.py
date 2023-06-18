@@ -16,7 +16,7 @@ print (f'A connection to PostgreSQL was successfully established')
 ###creates a table in PostgreSQL database
 metadata = sqlalchemy.MetaData()
 
-table_name = "candidates_progress"
+table_name = "candidate_progress"
 
 table = sqlalchemy.Table(
     table_name,
