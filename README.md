@@ -1,5 +1,6 @@
 # ETL-processes
 Various scripts (created with Python, Pandas, SQLAlchemy) that allows to load data from various sources, modify them add/add new values and then load them to PostgreSQL DB, using SQLAlchemy.
+Later on, the data transformed with these scripts are being used to analyse them in BI tools, such as PowerBI/Excel
 
 :rocket: Tech stack:
 **Python 3.1x |||
