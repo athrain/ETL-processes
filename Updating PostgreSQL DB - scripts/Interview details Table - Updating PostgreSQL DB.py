@@ -163,8 +163,9 @@ for counter in range(len(new_values_df)):
 
     counter += 1
 
-
 ###compare if the previous records should be changed
+
+
 for counter in range(len(unique_values_main_table)):
 
     application_id = unique_values_main_table.iloc[counter, 0]
@@ -173,13 +174,15 @@ for counter in range(len(unique_values_main_table)):
     one_candidate_df_main_table = main_table.loc[main_table['application_id'] == application_id]
     one_candidate_df_main_table = one_candidate_df_main_table.sort_values(by='interview_time', ascending=True)
     one_candidate_df_main_table = one_candidate_df_main_table.reset_index()
-    one_candidate_df_main_table = one_candidate_df_main_table.drop(columns=['index'])  ###get rid of the unnecessary column in this table, created by reseting index
+    one_candidate_df_main_table = one_candidate_df_main_table.drop(
+        columns=['index'])  ###get rid of the unnecessary column in this table, created by reseting index
 
     ###prepare whole df with one candidate to compare, from raw_data
     one_candidate_df_raw_data = raw_data.loc[raw_data['application_id'] == application_id]
     one_candidate_df_raw_data = one_candidate_df_raw_data.sort_values(by='interview_time', ascending=True)
     one_candidate_df_raw_data = one_candidate_df_raw_data.reset_index()
-    one_candidate_df_raw_data = one_candidate_df_raw_data.drop(columns=['index'])  ###get rid of the unnecessary column in this table, created by reseting index
+    one_candidate_df_raw_data = one_candidate_df_raw_data.drop(
+        columns=['index'])  ###get rid of the unnecessary column in this table, created by reseting index
     for row in range(len(one_candidate_df_raw_data)):
 
         try:
@@ -198,16 +201,38 @@ for counter in range(len(unique_values_main_table)):
     one_candidate_df_raw_data['progress_in_interviews_number'] = one_candidate_df_raw_data[
         'progress_in_interviews_number'].astype(np.int64)
 
-    ###compare the length of both df and decide what to do
+    ###compare the length of both dfs and decide what to do
+
+    counter_the_same_rows = 0
+
     if len(one_candidate_df_main_table) == len(one_candidate_df_raw_data):
+
         for row in range(len(one_candidate_df_main_table)):
             main_table_candidate_in_dict = one_candidate_df_main_table.loc[row].to_dict()
             raw_data_candidate_in_dict = one_candidate_df_raw_data.loc[row].to_dict()
             if main_table_candidate_in_dict == raw_data_candidate_in_dict:
-                print('DICTIONARIES ARE THE SAME!')
+                pass
             else:
-                print('DICTIONARIES ARE NOT THe SAME!')
+                with engine.connect() as conn:
+                    conn.execute(sql
+                                 .delete(table)
+                                 .where(table.c.application_id == main_table_candidate_in_dict['application_id'])
+                                 .where(table.c.interview_stage == main_table_candidate_in_dict['interview_stage'])
+                                 .where(table.c.interview_time == main_table_candidate_in_dict['interview_time'])
+                                 )
+                    conn.commit()
+                    insert_into_table(raw_data_candidate_in_dict)
+
+    ###if there are additional rows or some were deleted - drop the previous records and add brand new ones
     else:
-        print('NOT THE SAME AT ALL')
+        with engine.connect() as conn:
+            conn.execute(sql
+                         .delete(table)
+                         .where(table.c.application_id == application_id)
+                         )
+            conn.commit()
+        for row in range(len(one_candidate_df_raw_data)):
+            raw_data_candidate_in_dict = one_candidate_df_raw_data.loc[row].to_dict()
+            insert_into_table(raw_data_candidate_in_dict)
 
     counter += 1
