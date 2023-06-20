@@ -9,6 +9,7 @@ def insert_into_table (values_to_insert):
 
 import pandas as pd
 import sqlalchemy as sql
+import numpy as np
 
 ###load all the tables into the script - main table from PostgreSQL DB and raw data
 
@@ -155,9 +156,58 @@ for counter in range(len(new_values_df)):
     else:
         one_candidate_interviews_df.at[0, "first_last_interview"] = "First interview"
         one_candidate_interviews_df.at[len(one_candidate_interviews_df) - 1, "first_last_interview"] = "Last interview"
-        
+
     for dataframe in range(len(one_candidate_interviews_df)):
         values_in_dict = one_candidate_interviews_df.loc[dataframe].to_dict()
         insert_into_table(values_in_dict)
+
+    counter += 1
+
+
+###compare if the previous records should be changed
+for counter in range(len(unique_values_main_table)):
+
+    application_id = unique_values_main_table.iloc[counter, 0]
+
+    ###prepare whole df with one candidate to compare, from main_table
+    one_candidate_df_main_table = main_table.loc[main_table['application_id'] == application_id]
+    one_candidate_df_main_table = one_candidate_df_main_table.sort_values(by='interview_time', ascending=True)
+    one_candidate_df_main_table = one_candidate_df_main_table.reset_index()
+    one_candidate_df_main_table = one_candidate_df_main_table.drop(columns=['index'])  ###get rid of the unnecessary column in this table, created by reseting index
+
+    ###prepare whole df with one candidate to compare, from raw_data
+    one_candidate_df_raw_data = raw_data.loc[raw_data['application_id'] == application_id]
+    one_candidate_df_raw_data = one_candidate_df_raw_data.sort_values(by='interview_time', ascending=True)
+    one_candidate_df_raw_data = one_candidate_df_raw_data.reset_index()
+    one_candidate_df_raw_data = one_candidate_df_raw_data.drop(columns=['index'])  ###get rid of the unnecessary column in this table, created by reseting index
+    for row in range(len(one_candidate_df_raw_data)):
+
+        try:
+            one_candidate_df_raw_data.at[row, "progress_in_interviews_number"] = interview_stages_names_df.iloc[row, 0]
+            one_candidate_df_raw_data.at[row, "progress_in_interviews_names"] = interview_stages_names_df.iloc[row, 1]
+        except:
+            print('Out of range, more than 14 interviews!')
+            pass
+
+    if len(one_candidate_df_raw_data) == 1:
+        one_candidate_df_raw_data.at[0, "first_last_interview"] = "Only one interview"
+    else:
+        one_candidate_df_raw_data.at[0, "first_last_interview"] = "First interview"
+        one_candidate_df_raw_data.at[len(one_candidate_df_raw_data) - 1, "first_last_interview"] = "Last interview"
+
+    one_candidate_df_raw_data['progress_in_interviews_number'] = one_candidate_df_raw_data[
+        'progress_in_interviews_number'].astype(np.int64)
+
+    ###compare the length of both df and decide what to do
+    if len(one_candidate_df_main_table) == len(one_candidate_df_raw_data):
+        for row in range(len(one_candidate_df_main_table)):
+            main_table_candidate_in_dict = one_candidate_df_main_table.loc[row].to_dict()
+            raw_data_candidate_in_dict = one_candidate_df_raw_data.loc[row].to_dict()
+            if main_table_candidate_in_dict == raw_data_candidate_in_dict:
+                print('DICTIONARIES ARE THE SAME!')
+            else:
+                print('DICTIONARIES ARE NOT THe SAME!')
+    else:
+        print('NOT THE SAME AT ALL')
 
     counter += 1
