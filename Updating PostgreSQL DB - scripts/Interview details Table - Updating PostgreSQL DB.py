@@ -77,7 +77,8 @@ raw_data = raw_data.drop(raw_data[raw_data['interview_stage']==' '].index)
 
 ###create a DF that stores information about the level of the interview and the progress, that we will use further in analysis
 
-d = {"progress_in_interviews_number": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], "progress_in_interviews_names":
+d = {"progress_in_interviews_number": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+     "progress_in_interviews_names":
      ['First Interview', 'Second Interview', 'Third Interview', 'Fourth Interview', 'Fifth Interview','Sixth Interview', 'Seventh Interview',
      'Eighth Interview', 'Ninth Interview', 'Tenth Interview', 'Eleventh Interview', 'Twelfth Interview', 'Thirteenth Interview', 'Fourteenth Interview']}
 interview_stages_names_df = pd.DataFrame(data=d)
@@ -154,13 +155,9 @@ for counter in range(len(new_values_df)):
     else:
         one_candidate_interviews_df.at[0, "first_last_interview"] = "First interview"
         one_candidate_interviews_df.at[len(one_candidate_interviews_df) - 1, "first_last_interview"] = "Last interview"
-
-    print(one_candidate_interviews_df)
+        
     for dataframe in range(len(one_candidate_interviews_df)):
         values_in_dict = one_candidate_interviews_df.loc[dataframe].to_dict()
-        # print(one_candidate_interviews_df)
-        print(values_in_dict)
-        print('We are here')
         insert_into_table(values_in_dict)
 
     counter += 1
