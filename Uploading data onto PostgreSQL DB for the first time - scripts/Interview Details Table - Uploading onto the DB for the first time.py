@@ -33,13 +33,36 @@ table = sql.Table(
 metadata.create_all(engine)
 print (f'A table {table_name} was succesfully created')
 
+###Rename the columns in table to import, so that their names match what we have in PostgreSQL DB
+
+table_to_import = table_to_import.rename(columns=
+                                        {"Application_Encrypted_ID": "application_id",
+                                         "Stage_at_the_Interview": "interview_stage",
+                                         "Interview_Date": "interview_date",
+                                         "Interview_Time": "interview_time",
+                                         "No_of_interviewers": "no_of_interviewers",
+                                         "Progress_in_Interviews_Numbers": "progress_in_interviews_number",
+                                         "Progress_in_Interviews_Names": "progress_in_interviews_names",
+                                         "First_Last_Interview": 'first_last_interview'}
+                          )
+
+###Transfer values from Excel df to PostgreSQL DB
+
+for row in range (len(table_to_import)):
+    values_in_dict = table_to_import.loc[row].to_dict() ###change from DF to dictionary, which is then uploaded to PostgreSQL DB
+
+    with engine.connect() as conn:
+        conn.execute(sql
+                    .insert(table)
+                    .values([values_in_dict])
+                    )
+        conn.commit()
 
 
-        if counter % 100 == 0:
-            print (f'Added {counter} rows with interview details')
-            pass
-        else:
-            pass
-        counter +=1
+    if row % 100 == 0:
+        print (f'Added {row} rows with interview details, out of {len(table_to_import)}')
+    else:
+        pass
+
 
 print (f'The whole process is finished!')
