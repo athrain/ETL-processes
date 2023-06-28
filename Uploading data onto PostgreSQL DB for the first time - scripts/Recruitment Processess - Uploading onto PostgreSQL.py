@@ -91,3 +91,21 @@ raw_data = raw_data.rename(columns=
                                          }
                           )
 
+###adding values into database
+
+for row in range (len(raw_data)):
+    values_in_dict = raw_data.loc[row].to_dict()  ###change from DF to dictionary, which is then uploaded to PostgreSQL DB
+
+    with engine.connect() as conn:
+        conn.execute(sql
+                     .insert(table)
+                     .values([values_in_dict])
+                     )
+        conn.commit()
+
+    if row % 100 == 0:
+        print(f'Added {row} rows with recruitment process details, out of {len(raw_data)}')
+    else:
+        pass
+
+print(f'The whole process is finished!')
