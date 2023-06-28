@@ -110,6 +110,32 @@ for new_requisition in range (len(new_values_df)):
                      )
         conn.commit()
 
-###checking if there are changes in any dictionary. If not - skip. If yes - replace the whole row in a database
+    ###delete that req ids also from raw data, so that they are not added to main table later on
+    raw_data = raw_data.drop(raw_data[raw_data['process_id'] == req_id].index)
+    raw_data = raw_data.reset_index()
+    raw_data = raw_data.drop(columns=['index'])  ###get rid of the unnecessary column in this table, created by reseting index
 
-for requisition in range (len())
+###checking if there are changes in any dictionary in already existing requisitions. If not - skip. If yes - replace the whole row in a database
+
+for requisition in range (len(raw_data)):
+    req_id = raw_data.iloc[requisition, 0]
+    raw_data_values_in_dict = raw_data.loc[requisition].to_dict()  ###change from DF to dictionary, which is then uploaded to PostgreSQL DB
+    main_table_values_in_dict = main_table[main_table['process_id'] == req_id].to_dict()
+
+    if main_table_values_in_dict == raw_data_values_in_dict:
+        pass ###we pass here, as it means there are no changes in req details since the last time
+
+    else:
+        with engine.connect() as conn:
+            conn.execute(sql
+                         .insert(table)
+                         .values([raw_data_values_in_dict])
+                         )
+            conn.commit()
+
+    if requisition % 100 == 0:
+        print(f'Changed {requisition} rows with recruitment process details, out of {len(raw_data)}')
+    else:
+        pass
+
+print(f'The whole process is finished!')
