@@ -7,6 +7,7 @@ import pandas as pd
 ###connect to PostgreSQL table, load other necessary files
 engine = sql.create_engine('postgresql+psycopg2://user_name:password@localhost/database_name')
 raw_data = pd.read_excel(r"C:\path\file_name.xlsx")
+main_table = pd.read_sql("processess_details", con=engine.connect())
 print (f'A connection to PostgreSQL was successfully established')
 
 ###creates a table in PostgreSQL database
@@ -86,5 +87,29 @@ raw_data = raw_data.rename(columns=
                                          "Requisition Days on Hold": "days_on_hold"
                                          }
                           )
+###adding new requisitions based on newest IDs
 
-###adding values into database
+unique_values_main_table = pd.DataFrame(columns=['process_id'])
+uniques = main_table['process_id'].unique()
+unique_values_main_table['process_id'] = uniques.tolist()
+
+unique_values_raw_data = pd.DataFrame(columns=['process_id'])
+uniques = raw_data['process_id'].unique()
+unique_values_raw_data['process_id'] = uniques.tolist()
+
+new_values_df = pd.concat([unique_values_main_table,unique_values_raw_data]).drop_duplicates(keep=False) ###creates a unique values, that are not yet in the main table
+
+for new_requisition in range (len(new_values_df)):
+    req_id = new_values_df.iloc[new_requisition, 0]
+    values_in_dict = raw_data[raw_data['process_id'] == req_id].to_dict()  ###change from DF to dictionary, which is then uploaded to PostgreSQL DB
+
+    with engine.connect() as conn:
+        conn.execute(sql
+                     .insert(table)
+                     .values([values_in_dict])
+                     )
+        conn.commit()
+
+###checking if there are changes in any dictionary. If not - skip. If yes - replace the whole row in a database
+
+for requisition in range (len())
