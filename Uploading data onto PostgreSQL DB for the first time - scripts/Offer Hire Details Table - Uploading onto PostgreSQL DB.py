@@ -1,6 +1,6 @@
 ###The script allows to connect to database,
 ### create a table
-### and add some values from Pandas dataframe,
+### and add some values from Pandas dataframe, for the first time (meaning it creates a table)
 
 
 ###BEFORE USING - include username, password, DB name + path to additional files/tables
@@ -43,10 +43,10 @@ print (f'A table {table_name} was succesfully created')
 
 for row in range (len(table_to_import)):
     ###the below logic is because I check if there are any offer made or not - as it gets data from the general Candidate Details table
-    ###if it's True, then it means there were no offer
+    ###if it's True, then it means there were no offer (no job title and no hired date)
     if pd.isna(table_to_import.iloc[row, 16]) is True and pd.isna(table_to_import.iloc[row, 23]) is True:
         continue
-    else:
+    else: ###if the above is False, then it means there was an offer. Firstly, add string/integer values
         application_id = table_to_import.iloc[row,0]
         candidate_id = table_to_import.iloc[row,1]
         job_title = table_to_import.iloc[row, 16]
@@ -73,40 +73,39 @@ for row in range (len(table_to_import)):
                      )
             conn.commit()
 
-    if row % 25 == 0:
-        print (f'Checked {row} rows, out of {len(table_to_import)}')
-        pass
-    else:
-        pass
+        ###hired date sometimes is present, sometimes not. As the column is Datestamp in PostgreSQL, it must be a date, not NaT. It checks that.
+        hired_date = table_to_import.iloc[row, 23]
+        if pd.isna(hired_date) is True:
+            continue
+        else:
+            with engine.connect() as conn:
+                conn.execute(sql
+                        .update(table)
+                        .where(table.c.application_id==application_id)
+                        .values
+                        (hired_date=hired_date)
+                        )
+                conn.commit()
 
-for row in range (len(table_to_import)):
+        ###start date sometimes is present, sometimes not. As the column is Datestamp in PostgreSQL, it must be a date, not NaT. It checks that.
+        start_date = table_to_import.iloc[row, XXX] ###the position in table to be checked later on
 
-    application_encrypted_id = table_to_import.iloc[row, 0]
+        if pd.isna(start_date) is True:
+            continue
+        else:
+            with engine.connect() as conn:
+                conn.execute(sql
+                        .update(table)
+                        .where(table.c.application_id==application_id)
+                        .values
+                        (start_date=start_date)
+                        )
+                conn.commit()
 
-    hired_date = table_to_import.iloc[row, 23]
-    if pd.isna(hired_date) is True:
-        continue
-    else:
-        with engine.connect() as conn:
-            conn.execute(sql
-                     .update(table)
-                     .where(table.c.application_id==application_encrypted_id)
-                     .values
-                     (hired_date=hired_date)
-                     )
-            conn.commit()
-
-    start_date = table_to_import.iloc[row, XXX] ###the position in table to be checked later on
-    if pd.isna(start_date) is True:
-        continue
-    else:
-        with engine.connect() as conn:
-            conn.execute(sql
-                     .update(table)
-                     .where(table.c.application_id==application_encrypted_id)
-                     .values
-                     (start_date=start_date)
-                     )
-            conn.commit()
+        if row % 25 == 0:
+            print (f'Checked {row} rows, out of {len(table_to_import)}')
+            pass
+        else:
+            pass
 
 print (f'A table was sucessfully loaded from PostgreSQL to Pandas DF')
